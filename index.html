@@ -641,19 +641,51 @@
   </div>
 </div>
 
-<script>
-  let orders = JSON.parse(localStorage.getItem('pressOrders') || '[]');
+<!-- Firebase SDKs -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyDmef0oPKxU4UoMWShMYJHPHFkWAXdsb_Q",
+    authDomain: "shri-printers.firebaseapp.com",
+    databaseURL: "https://shri-printers-default-rtdb.firebaseio.com",
+    projectId: "shri-printers",
+    storageBucket: "shri-printers.firebasestorage.app",
+    messagingSenderId: "943995324982",
+    appId: "1:943995324982:web:1186573ed34c4ef65e2697"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+  const ordersCol = collection(db, 'orders');
+
+  let orders = [];
   let currentView = 'all';
   let currentTypeFilter = '';
   let editingId = null;
 
-  function save() {
-    localStorage.setItem('pressOrders', JSON.stringify(orders));
+  // Show loading state
+  document.getElementById('orders-list').innerHTML = '<div class="empty-state"><div class="icon">⏳</div><p>Loading orders from cloud...</p></div>';
+
+  // Real-time listener — auto updates whenever data changes in Firebase
+  onSnapshot(query(ordersCol, orderBy('createdAt', 'desc')), (snapshot) => {
+    orders = snapshot.docs.map(d => ({ ...d.data(), id: d.id }));
+    updateStats();
+    renderOrders();
+  });
+
+  async function save(data) {
+    await setDoc(doc(ordersCol, data.id), data);
     updateStats();
   }
 
+  async function removeOrder(id) {
+    await deleteDoc(doc(ordersCol, id));
+  }
+
   function genId() {
-    const max = orders.length ? Math.max(...orders.map(o => parseInt(o.id))) : 0;
+    const max = orders.length ? Math.max(...orders.map(o => parseInt(o.id) || 0)) : 0;
     return String(max + 1).padStart(4, '0');
   }
 
@@ -698,7 +730,7 @@
     document.getElementById('order-modal').classList.add('open');
   }
 
-  function saveOrder() {
+  async function saveOrder() {
     const name = document.getElementById('f-name').value.trim();
     const type = document.getElementById('f-type').value;
     const orderDate = document.getElementById('f-date').value;
@@ -766,22 +798,15 @@
       else data.payment = 'Unpaid';
     }
 
-    if (editingId) {
-      orders = orders.map(o => o.id === editingId ? data : o);
-    } else {
-      orders.unshift(data);
-    }
-    save();
+    data.createdAt = editingId ? (orders.find(o=>o.id===editingId)?.createdAt || Date.now()) : Date.now();
+    await save(data);
     closeModal('order-modal');
-    renderOrders();
   }
 
-  function deleteOrder(id) {
+  async function deleteOrder(id) {
     if (!confirm('Delete this order? This cannot be undone.')) return;
-    orders = orders.filter(o => o.id !== id);
-    save();
+    await removeOrder(id);
     closeModal('detail-modal');
-    renderOrders();
   }
 
   function openDetail(id) {
@@ -964,14 +989,11 @@
     `).join('');
   }
 
-  function quickUpdate(id, field, value) {
+  async function quickUpdate(id, field, value) {
     const o = orders.find(x => x.id === id);
     if (!o) return;
-    o[field] = value;
-    // if marking fully paid, update payment
-    if (field === 'payment' && value === 'Paid') o.payment = 'Paid';
-    save();
-    renderOrders();
+    const updated = { ...o, [field]: value };
+    await save(updated);
   }
 
   function updateStats() {
@@ -998,9 +1020,6 @@
     ov.addEventListener('click', e => { if (e.target === ov) ov.classList.remove('open'); });
   });
 
-  // Init
-  updateStats();
-  renderOrders();
 </script>
 </body>
 </html>
