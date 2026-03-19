@@ -253,6 +253,23 @@
   .badge-progress { background: #fff3cd; color: #856404; }
   .badge-pending { background: #f0f0f0; color: #555; }
 
+  .quick-actions { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
+  .qa-btn {
+    font-size: 0.7rem;
+    padding: 3px 10px;
+    border-radius: 20px;
+    border: 1.5px solid var(--border);
+    background: white;
+    color: var(--ink);
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 500;
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+  .qa-btn:hover { border-color: var(--gold); background: var(--cream); }
+  .qa-btn.active-step { border-color: var(--gold); background: var(--gold); color: var(--ink); }
+
   .empty-state {
     text-align: center;
     padding: 4rem 2rem;
@@ -900,23 +917,61 @@
     const dMap = { 'Pending':'badge-pending','In Progress':'badge-progress','Ready':'badge-ready','Delivered':'badge-delivered' };
     const pMap = { 'Paid':'badge-paid','Partial':'badge-partial','Unpaid':'badge-unpaid' };
 
+    // Combined smart badge: shows one meaningful status
+    function smartBadge(o) {
+      if (o.delivery === 'Delivered' && o.payment === 'Paid') return '<span class="badge badge-delivered">✓ Complete</span>';
+      if (o.delivery === 'Delivered' && o.payment !== 'Paid') return '<span class="badge badge-unpaid">Delivered · Unpaid</span>';
+      if (o.delivery === 'Ready') return '<span class="badge badge-ready">Ready to Deliver</span>';
+      if (o.delivery === 'In Progress' && o.payment === 'Paid') return '<span class="badge badge-progress">In Progress · Paid</span>';
+      if (o.delivery === 'In Progress') return '<span class="badge badge-progress">In Progress</span>';
+      if (o.payment === 'Unpaid') return '<span class="badge badge-unpaid">Pending · Unpaid</span>';
+      if (o.payment === 'Partial') return '<span class="badge badge-partial">Pending · Partial</span>';
+      return '<span class="badge badge-pending">Pending</span>';
+    }
+
+    // Next logical delivery step buttons
+    function quickActions(o) {
+      const steps = ['Pending','In Progress','Ready','Delivered'];
+      const idx = steps.indexOf(o.delivery);
+      const btns = [];
+      if (idx < steps.length - 1) {
+        const next = steps[idx + 1];
+        const labels = { 'In Progress':'▶ Start Work', 'Ready':'✓ Mark Ready', 'Delivered':'🚚 Mark Delivered' };
+        btns.push(`<button class="qa-btn" onclick="event.stopPropagation();quickUpdate('${o.id}','delivery','${next}')">${labels[next]}</button>`);
+      }
+      if (o.payment !== 'Paid' && o.amount > 0) {
+        btns.push(`<button class="qa-btn" onclick="event.stopPropagation();quickUpdate('${o.id}','payment','Paid')">💰 Mark Paid</button>`);
+      }
+      return btns.length ? `<div class="quick-actions">${btns.join('')}</div>` : '';
+    }
+
     list.innerHTML = filtered.map(o => `
       <div class="order-card" onclick="openDetail('${o.id}')">
         <div class="order-id">#${o.id}</div>
         <div class="order-info">
           <h3>${o.name}</h3>
           <p><span class="type-tag">${o.type}</span>${o.qty ? ` · Qty: ${o.qty}` : ''}${o.due ? ` · Due: ${o.due}` : ''}</p>
+          ${quickActions(o)}
         </div>
         <div class="order-meta">
           <strong>₹${o.amount.toLocaleString('en-IN')}</strong>
           ${o.advance > 0 ? `Adv: ₹${o.advance.toLocaleString('en-IN')}` : 'No advance'}
         </div>
         <div class="badges">
-          <span class="badge ${pMap[o.payment]}">${o.payment}</span>
-          <span class="badge ${dMap[o.delivery]}">${o.delivery}</span>
+          ${smartBadge(o)}
         </div>
       </div>
     `).join('');
+  }
+
+  function quickUpdate(id, field, value) {
+    const o = orders.find(x => x.id === id);
+    if (!o) return;
+    o[field] = value;
+    // if marking fully paid, update payment
+    if (field === 'payment' && value === 'Paid') o.payment = 'Paid';
+    save();
+    renderOrders();
   }
 
   function updateStats() {
