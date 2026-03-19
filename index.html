@@ -684,20 +684,59 @@
   function saveOrder() {
     const name = document.getElementById('f-name').value.trim();
     const type = document.getElementById('f-type').value;
+    const orderDate = document.getElementById('f-date').value;
+    const dueDate = document.getElementById('f-due').value;
+    const phone = document.getElementById('f-phone').value.trim();
+    const qty = document.getElementById('f-qty').value;
+    const amount = parseFloat(document.getElementById('f-amount').value) || 0;
+    const advance = parseFloat(document.getElementById('f-advance').value) || 0;
+
+    // Name validation — must not be only numbers/symbols
     if (!name) { alert('Please enter customer name.'); return; }
+    if (/^[0-9\s\W]+$/.test(name)) { alert('Customer name looks invalid. Please enter a proper name.'); return; }
+    if (name.length < 2) { alert('Please enter a valid customer name.'); return; }
+
+    // Phone validation — exactly 10 digits if provided
+    if (phone) {
+      const digitsOnly = phone.replace(/\s|-/g, '');
+      if (!/^[6-9]\d{9}$/.test(digitsOnly)) {
+        alert('Phone number must be a valid 10-digit Indian mobile number (starting with 6, 7, 8, or 9).'); return;
+      }
+    }
+
     if (!type) { alert('Please select order type.'); return; }
+
+    // Quantity — must be a positive whole number if provided
+    if (qty && (isNaN(qty) || parseInt(qty) <= 0 || !Number.isInteger(parseFloat(qty)))) {
+      alert('Quantity must be a positive whole number.'); return;
+    }
+
+    // Date validation
+    if (orderDate && dueDate && dueDate < orderDate) {
+      alert('Due date cannot be before the order date. Please check the dates.'); return;
+    }
+
+    // Amount validations
+    if (amount < 0) { alert('Total amount cannot be negative.'); return; }
+    if (advance > 0 && amount === 0) {
+      alert('Please enter the total amount before adding advance payment.'); return;
+    }
+    if (advance < 0) { alert('Advance amount cannot be negative.'); return; }
+    if (advance > amount) {
+      alert('Advance paid (₹' + advance.toLocaleString('en-IN') + ') cannot be more than total amount (₹' + amount.toLocaleString('en-IN') + ').'); return;
+    }
 
     const data = {
       id: editingId || genId(),
       name,
-      phone: document.getElementById('f-phone').value.trim(),
+      phone: phone.replace(/\s|-/g, ''),
       type,
-      qty: document.getElementById('f-qty').value,
+      qty: qty ? parseInt(qty) : '',
       desc: document.getElementById('f-desc').value.trim(),
-      date: document.getElementById('f-date').value,
-      due: document.getElementById('f-due').value,
-      amount: parseFloat(document.getElementById('f-amount').value) || 0,
-      advance: parseFloat(document.getElementById('f-advance').value) || 0,
+      date: orderDate,
+      due: dueDate,
+      amount,
+      advance,
       delivery: document.getElementById('f-delivery').value,
       payment: document.getElementById('f-payment').value,
       notes: document.getElementById('f-notes').value.trim(),
@@ -774,8 +813,10 @@
       <div class="bill-section" id="bill-print">
         <div class="bill-header">
           <div style="font-size:1.6rem;margin-bottom:4px">🖨️</div>
-          <h2>Printing Press</h2>
-          <p>Order Receipt / Bill</p>
+          <h2>Shri Printers</h2>
+          <p style="font-size:0.82rem;color:var(--muted);margin-top:3px">New Market, Mubarakpur</p>
+          <p style="font-size:0.82rem;color:var(--muted);margin-top:2px">Prop. Parveen Gupta &nbsp;|&nbsp; +91 9357272837</p>
+          <p style="font-size:0.75rem;color:var(--muted);margin-top:8px;letter-spacing:0.05em;text-transform:uppercase">Order Receipt / Bill</p>
         </div>
         <div class="bill-row"><span>Bill No.</span><strong>#${o.id}</strong></div>
         <div class="bill-row"><span>Date</span><span>${o.date || '—'}</span></div>
