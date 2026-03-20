@@ -647,14 +647,14 @@
   import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
   const firebaseConfig = {
-  apiKey: "AIzaSyDmef0oPKxU4UoMWShMYJHPHFkWAXdsb_Q",
-  authDomain: "shri-printers.firebaseapp.com",
-  databaseURL: "https://shri-printers-default-rtdb.firebaseio.com",
-  projectId: "shri-printers",
-  storageBucket: "shri-printers.firebasestorage.app",
-  messagingSenderId: "943995324982",
-  appId: "1:943995324982:web:1186573ed34c4ef65e2697"
-};
+    apiKey: "AIzaSyDmef0oPKxU4UoMWShMYJHPHFkWAXdsb_Q",
+    authDomain: "shri-printers.firebaseapp.com",
+    databaseURL: "https://shri-printers-default-rtdb.firebaseio.com",
+    projectId: "shri-printers",
+    storageBucket: "shri-printers.firebasestorage.app",
+    messagingSenderId: "943995324982",
+    appId: "1:943995324982:web:1186573ed34c4ef65e2697"
+  };
 
   const app = initializeApp(firebaseConfig);
   const db = getFirestore(app);
@@ -1019,6 +1019,19 @@
   document.querySelectorAll('.overlay').forEach(ov => {
     ov.addEventListener('click', e => { if (e.target === ov) ov.classList.remove('open'); });
   });
+
+  // Expose functions globally so onclick attributes work with ES modules
+  window.openNewModal = openNewModal;
+  window.openEditModal = openEditModal;
+  window.saveOrder = saveOrder;
+  window.deleteOrder = deleteOrder;
+  window.openDetail = openDetail;
+  window.showBill = showBill;
+  window.closeModal = closeModal;
+  window.setView = setView;
+  window.setTypeFilter = setTypeFilter;
+  window.quickUpdate = quickUpdate;
+  window.renderOrders = renderOrders;
 
 </script>
 </body>
