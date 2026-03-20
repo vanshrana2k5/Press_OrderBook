@@ -646,14 +646,16 @@
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
   import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
+  // 🔧 Replace these values with your own Firebase project config
+  // Get them from: Firebase Console → Project Settings → Your Apps → Web App
   const firebaseConfig = {
-    apiKey: "AIzaSyDmef0oPKxU4UoMWShMYJHPHFkWAXdsb_Q",
-    authDomain: "shri-printers.firebaseapp.com",
-    databaseURL: "https://shri-printers-default-rtdb.firebaseio.com",
-    projectId: "shri-printers",
-    storageBucket: "shri-printers.firebasestorage.app",
-    messagingSenderId: "943995324982",
-    appId: "1:943995324982:web:1186573ed34c4ef65e2697"
+    apiKey: "YOUR_API_KEY",
+    authDomain: "YOUR_AUTH_DOMAIN",
+    databaseURL: "YOUR_DATABASE_URL",
+    projectId: "YOUR_PROJECT_ID",
+    storageBucket: "YOUR_STORAGE_BUCKET",
+    messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+    appId: "YOUR_APP_ID"
   };
 
   const app = initializeApp(firebaseConfig);
